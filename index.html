@@ -78,10 +78,12 @@
   </div>
 
   <script>
+    // Tooltip dictionary
     const tooltipDict = {
-      "name": "a way to address someone.",
-      "hello": "a greeting.",
-      "what": "question word."
+      "hello": "Greeting.",
+      "Britain": "The United Kingdom.",
+      "21": "his age.",
+      "dance": "Type of movement."
     };
 
     let subtitles = [];
@@ -109,22 +111,20 @@
     const subtitleBox = document.getElementById("subtitleBox");
     const video = document.getElementById("video");
 
-    // Check and display current subtitle
     video.addEventListener("timeupdate", () => {
       const current = video.currentTime;
       const active = subtitles.find(sub => current >= sub.start && current <= sub.end);
       subtitleBox.innerHTML = active ? formatSubtitleWithTooltips(active.text) : "";
     });
 
-    // Highlight and add tooltip to words that exist in the dictionary
+    // Highlight tooltip words
     function formatSubtitleWithTooltips(text) {
       return text.split(/\b/).map(word => {
-        const cleanWord = word.toLowerCase().replace(/[^\w]/g, "");
-        if (tooltipDict[cleanWord]) {
-          return `<span class="tooltip" data-tooltip="${tooltipDict[cleanWord]}">${word}</span>`;
-        } else {
-          return word;
+        const stripped = word.replace(/[^\w]/g, "").toLowerCase();
+        if (tooltipDict[stripped]) {
+          return `<span class="tooltip" data-tooltip="${tooltipDict[stripped]}">${word}</span>`;
         }
+        return word;
       }).join("");
     }
   </script>
