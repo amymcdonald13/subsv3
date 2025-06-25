@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Interactive Subtitles with Tooltips</title>
+  <style>
+    body {
+      background: #111;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+
+    .video-container {
+      position: relative;
+      width: 80%;
+      margin: 50px auto;
+    }
+
+    video {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .subtitles {
+      position: absolute;
+      bottom: 10%;
+      left: 5%;
+      right: 5%;
+      text-align: center;
+      font-size: 1.5em;
+      background: rgba(0, 0, 0, 0.6);
+      padding: 10px;
+      border-radius: 8px;
+      min-height: 2em;
+    }
+
+    .tooltip {
+      position: relative;
+      cursor: pointer;
+      color: #ffeb3b;
+    }
+
+    .tooltip::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: 150%;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: #333;
+      color: #fff;
+      padding: 6px 10px;
+      border-radius: 5px;
+      white-space: nowrap;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.2s ease-in-out;
+      z-index: 10;
+    }
+
+    .tooltip:hover::after {
+      opacity: 1;
+      visibility: visible;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="video-container">
+    <video id="video" controls>
+      <source src="your-video.mp4" type="video/mp4">
+      Your browser does not support HTML5 video.
+    </video>
+
+    <div class="subtitles" id="subtitleBox"></div>
+  </div>
+
+  <script>
+    const tooltipDict = {
+      "quantum": "The smallest possible discrete unit of any physical property.",
+      "entanglement": "A phenomenon where particles remain connected.",
+      "superposition": "A principle where a system exists in multiple states at once."
+    };
+
+    let subtitles = [];
+
+    // Parse SRT timestamp to seconds
+    function parseTimestamp(ts) {
+      const [h, m, s] = ts.split(":");
+      const [sec, ms] = s.split(",");
+      return parseInt(h) * 3600 + parseInt(m) * 60 + parseInt(sec) + parseInt(ms) / 1000;
+    }
+
+    // Load and parse SRT file
+    fetch("subtitles.srt")
+      .then(response => response.text())
+      .then(data => {
+        const blocks = data.trim().split(/\r?\n\r?\n/);
+        subtitles = blocks.map(block => {
+          const lines = block.split(/\r?\n/);
+          const [start, end] = lines[1].split(" --> ").map(parseTimestamp);
+          const text = lines.slice(2).join(" ");
+          return { start, end, text };
+        });
+      });
+
+    const subtitleBox = document.getElementById("subtitleBox");
+    const video = document.getElementById("video");
+
+    // Check and display current subtitle
+    video.addEventListener("timeupdate", () => {
+      const current = video.currentTime;
+      const active = subtitles.find(sub => current >= sub.start && current <= sub.end);
+      subtitleBox.innerHTML = active ? formatSubtitleWithTooltips(active.text) : "";
+    });
+
+    // Highlight and add tooltip to words that exist in the dictionary
+    function formatSubtitleWithTooltips(text) {
+      return text.split(/\b/).map(word => {
+        const cleanWord = word.toLowerCase().replace(/[^\w]/g, "");
+        if (tooltipDict[cleanWord]) {
+          return `<span class="tooltip" data-tooltip="${tooltipDict[cleanWord]}">${word}</span>`;
+        } else {
+          return word;
+        }
+      }).join("");
+    }
+  </script>
+
+</body>
+</html>
